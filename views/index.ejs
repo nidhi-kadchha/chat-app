@@ -1,0 +1,142 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .vl {
+  border-left: 6px solid green;
+  height: 500px;
+}
+#ul1{list-style-type: none;}
+#ul2{list-style-type: none;}
+    </style>
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+<script>
+	var socket = io.connect('http://localhost:3000');
+    socket.on('connect', () =>
+    {
+        socket.emit('add-data', prompt("Enter Name"));
+        socket.on('euserlist', (users) =>
+        {
+
+                
+                for(var i=0; i<users.length; i++)
+                {
+                    var uli = document.createElement('li');
+                    uli.textContent = users[i] + "*";
+                    dbr.appendChild(uli);
+                }
+                
+                
+            
+        })
+    })
+</script>
+<body>
+    <div id = "user"><h1>Online Users</h1></div>
+
+    <form id="form" action="./index.ejs" method="post">
+        <div>
+            <div id="br"><ul id="ul1"></ul></div><hr>
+            <div id="br"><ul id="ul11"></ul></div>
+            <div id="rooms">Channles</div><hr>
+            <div class="v1"></div>
+            <div id="msg"><ul id="ul2"></ul></div>
+            <input type="text" id = "input"/>
+            <button type="submit" id="btn">Send</button>
+        </div>
+    </form>
+    <script>
+        var socket = io.connect('http://localhost:3000');
+        var dbr = document.getElementById('ul1');
+        var dmsg = document.getElementById('ul2');
+        var input = document.getElementById('input');
+        socket.on('broad', (data) =>
+        {
+            var bli = document.createElement('li');
+            bli.textContent ="";
+            bli.textContent = data;
+            dmsg.appendChild(bli);
+        });
+        socket.on('userlist', (users) =>
+        {
+
+                var uli = document.createElement('li');
+                for(var i=0; i<users.length; i++)
+                {
+                    uli.textContent = users[i] + "*";
+                }
+                
+                dbr.appendChild(uli);
+            
+        })
+
+        socket.on('updaterooms', (rooms,croom) =>
+        {
+            $('#rooms').empty();
+            $.each(rooms, (key,val) =>
+            {
+                if(val == croom)
+                {
+                    $('#rooms').append('<div>' + val + '</div>');
+                }
+                else
+                {
+                    $('#rooms').append('<div><a href="#" onclick="switchroom(\''+val+'\')">' + val + '</a></div>');
+                }
+            })
+        });
+        function switchroom(room){
+		socket.emit('switchroom', room);
+	}
+
+        form.addEventListener('submit', (e) =>
+        {
+            e.preventDefault();
+            if(input.value)
+            {
+                socket.emit('chatmsg', input.value);
+                input.value="";
+            }
+        });
+        socket.on('chatmsg', (username, msg) =>
+        {
+            var item = document.createElement('li');
+            item.textContent = ` ${username} : ${msg}`;
+            dmsg.appendChild(item);
+            window.scrollTo(0,document.body.scrollHeight);
+        });
+        socket.on('fetch', (data, croom) =>
+        {
+            dmsg.textContent="";
+            if(data.length)
+            {
+
+                for(var i=0; i<data.length; i++)
+                {
+                    if(data[i].msg.length)
+                    {
+                        for (var d=0; d<data[i].msg.length; d++)
+                        {
+                            if(data[i].msg[d].room === croom)
+                            {
+                                console.log(croom);
+                                var item = document.createElement('li');
+                    	        item.textContent = data[i].msg[d].name +":"+ data[i].msg[d].data ;
+                    	        dmsg.appendChild(item);
+                            }
+
+                        } 
+                    } 
+                }
+
+            }
+        })
+    </script>
+</body>
+</html>
